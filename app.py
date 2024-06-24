@@ -18,7 +18,7 @@ if "WEBHOOK_URL" not in st.session_state:
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname)
     port = os.getenv('PORT', 80)
-    st.session_state["WEBHOOK_URL"] = f"http://{ip_address}:{port}/callback"
+    st.session_state["WEBHOOK_URL"] = f"https://{ip_address}:{port}/callback"
 
 st.write(f"Public URL: {st.session_state['WEBHOOK_URL']}")
 
