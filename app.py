@@ -1,16 +1,20 @@
 import streamlit as st
-from linebot import LineBotApi, WebhookHandler
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.v3.messaging import MessagingApi, Configuration
+from linebot.v3.webhook import WebhookHandler
+from linebot.v3.webhook.models import MessageEvent, TextMessageContent
 from flask import Flask, request, abort
-
-LINE_CHANNEL_ACCESS_TOKEN = 'b4RQuAF/y/A1MXzS22fBepqVVLigoGuGYqYO+6gYe96v69oiPeBRS03g45m1MKkxJJiNqu9ISXRdGOCmCr/HkYWwnXyoU/ahADFSsz231j6hwojl2xqKXmzaxwIg3Zwrs/ZzdWBLZ1ctJZmkdJMkgAdB04t89/1O/w1cDnyilFU='
-LINE_CHANNEL_SECRET = '8e33786acc72dc61223106d5b9878422'
+import os
 
 # Initialize a Flask app
 app = Flask(__name__)
 
 # Set up LINE bot credentials
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+LINE_CHANNEL_ACCESS_TOKEN = 'b4RQuAF/y/A1MXzS22fBepqVVLigoGuGYqYO+6gYe96v69oiPeBRS03g45m1MKkxJJiNqu9ISXRdGOCmCr/HkYWwnXyoU/ahADFSsz231j6hwojl2xqKXmzaxwIg3Zwrs/ZzdWBLZ1ctJZmkdJMkgAdB04t89/1O/w1cDnyilFU='
+LINE_CHANNEL_SECRET = '8e33786acc72dc61223106d5b9878422'
+
+
+configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
+line_bot_api = MessagingApi(configuration)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 # Streamlit section
@@ -37,15 +41,15 @@ def callback():
     return 'OK'
 
 # Event handler for receiving messages
-@handler.add(MessageEvent, message=TextMessage)
+@handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     text = event.message.text
     st.write("Received message: " + text)
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text=text)
+        TextMessageContent(text=text)
     )
 
 # Run Flask app
 if __name__ == "__main__":
-    app.run(port=80)
+    app.run(port=5000)
