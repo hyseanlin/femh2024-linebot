@@ -1,69 +1,56 @@
-'''
-Before run this line bot code, you need to proceed the following steps:
-    1. Run ngrok http http://localhost:8080
-    2. Copy the https URL from ngrok and paste it to the webhook URL in LINE Developer Console
-    3. Set the webhook URL in LINE Developer Console
-    4. Run the code
-'''
+import streamlit as st
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+import os
 from flask import Flask, request, abort
 
-from linebot.v3 import (
-    WebhookHandler
-)
-from linebot.v3.exceptions import (
-    InvalidSignatureError
-)
-from linebot.v3.messaging import (
-    Configuration,
-    ApiClient,
-    MessagingApi,
-    ReplyMessageRequest,
-    TextMessage
-)
-from linebot.v3.webhooks import (
-    MessageEvent,
-    TextMessageContent
-)
+# Initialize Streamlit and Flask
+st.title("Line Bot with Streamlit")
 
-LINE_BOT_ACCESS_TOKEN = 'b4RQuAF/y/A1MXzS22fBepqVVLigoGuGYqYO+6gYe96v69oiPeBRS03g45m1MKkxJJiNqu9ISXRdGOCmCr/HkYWwnXyoU/ahADFSsz231j6hwojl2xqKXmzaxwIg3Zwrs/ZzdWBLZ1ctJZmkdJMkgAdB04t89/1O/w1cDnyilFU='
-LINE_BOT_CHANNEL_SECRET = '8e33786acc72dc61223106d5b9878422'
+# Set your Channel Access Token and Channel Secret
+LINE_CHANNEL_ACCESS_TOKEN = 'b4RQuAF/y/A1MXzS22fBepqVVLigoGuGYqYO+6gYe96v69oiPeBRS03g45m1MKkxJJiNqu9ISXRdGOCmCr/HkYWwnXyoU/ahADFSsz231j6hwojl2xqKXmzaxwIg3Zwrs/ZzdWBLZ1ctJZmkdJMkgAdB04t89/1O/w1cDnyilFU='
+LINE_CHANNEL_SECRET = '8e33786acc72dc61223106d5b9878422'
+
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
+# Flask app to handle the webhook
 app = Flask(__name__)
-
-configuration = Configuration(access_token=LINE_BOT_ACCESS_TOKEN)
-handler = WebhookHandler(LINE_BOT_CHANNEL_SECRET)
-
 
 @app.route("/callback", methods=['POST'])
 def callback():
-    # get X-Line-Signature header value
+    # Get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
 
-    # get request body as text
+    # Get request body as text
     body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    st.write("Request body: " + body)
 
-    # handle webhook body
+    # Handle webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
-        app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
         abort(400)
 
     return 'OK'
 
-
-@handler.add(MessageEvent, message=TextMessageContent)
+# Event handler for receiving messages
+@handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    user_id = event.source.user_id
-    received_message = event.message.text
-    with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text=f"你剛剛說：{received_message}")]
-            )
-        )
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=event.message.text)
+    )
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    # Run Flask app
+    from threading import Thread
+    def run_flask():
+        app.run(port=5000)
+    Thread(target=run_flask).start()
+
+    # Streamlit UI
+    st.write("This Streamlit app is running alongside a Flask server to handle Line bot webhooks.")
+    st.write("Make sure to set your Line webhook URL to `https://<your-domain>/callback`.")
+    st.text_area("Webhook request log:")
