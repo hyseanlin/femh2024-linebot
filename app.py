@@ -49,4 +49,3 @@ def handle_message(event):
 # Run Flask app
 if __name__ == "__main__":
     app.run(port=5000)
-d to add a Procfile and configure your app to listen to HTTP requests.
