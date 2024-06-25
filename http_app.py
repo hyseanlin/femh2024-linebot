@@ -3,7 +3,7 @@ import streamlit as st
 from urllib.parse import parse_qs
 
 # Get request example
-query_params = st.query_params()
+query_params = st.query_params().to_dict()
 if 'name' in query_params:
     st.write(f"Hello, {query_params['name'][0]}!")
 
